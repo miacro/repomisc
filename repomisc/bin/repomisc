@@ -1,0 +1,9 @@
+#!/bin/sh
+PYTHON=python
+if [[ ${1:0:6} == "python" ]]
+then
+    PYTHON=$1
+    shift
+fi
+echo ${PYTHON}
+exec ${PYTHON} -m repomisc.bin.repomisc $@
