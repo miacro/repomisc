@@ -2,13 +2,25 @@ import re
 
 
 def urlparse(repourl):
+    patterndict = {
+        "scheme": "http[s]?",
+        "username": "[^/]+",
+        "password": "[^/]+",
+        "host": "[^/]+",
+        "owner": "[^/]+",
+        "reponame": "[^/]+[^(.git)]",
+    }
     patterns = []
-    patterns.append("""^(?P<scheme>http[s]?)://\
-(?P<username>[^/]+):(?P<password>[^/]+)@(?P<host>[^/]+)/(?P<owner>[^/]+)\
-/(?P<repo>[^/]+[^(.git)])(.git)?$""")
+    patterns.append(
+        "^{}://{}:{}@{}/{}/{}(.git)?$".format(*[
+            "(?P<{}>{})".format(item, patterndict[item])
+            for item in ("scheme", "username", "password", "host", "owner",
+                         "reponame")
+        ]))
     a = re.fullmatch(patterns[0], repourl)
 
-    for name in ("scheme", "username", "password", "host", "owner", "repo"):
+    for name in ("scheme", "username", "password", "host", "owner",
+                 "reponame"):
         print(a.group(name))
 
 
