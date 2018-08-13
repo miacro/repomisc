@@ -5,5 +5,4 @@ then
     PYTHON=$1
     shift
 fi
-echo ${PYTHON}
 exec ${PYTHON} -m repomisc.bin.repomisc $@

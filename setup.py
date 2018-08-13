@@ -10,6 +10,8 @@ with open('{}/version.py'.format(package_name)) as version_file:
 
 requirements = [
     "pyconfigmanager",
+    # "gitpython",
+    # "pygit2",
 ]
 dependency_links = [
     """git+https://github.com/miacro/{}.git@master#egg={}-9999""".format(

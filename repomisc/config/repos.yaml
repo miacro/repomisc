@@ -1,0 +1,30 @@
+repomisc:
+  repo:
+    username: miacro
+    password: ""
+    basicurl: https://github.com
+  repos:
+  - bootstrap
+  - command-line-options
+  - dockerwrapper
+  - name: easycert
+    local:
+      branch: master
+    remote:
+      branch: master
+  - emacs.d
+  - lisp-koans
+  - miacro-overlay
+  - miacropp
+  - minesweeper
+  - https://a:b@github.com/miacro/mlmisc
+  - nginx.d
+  - online-judge
+  - pkget
+  - git@github.com:miacro/profiles.git
+  - pyconfigmanager
+  - repomisc
+  - stumpwm.d
+  - utils
+  - vim.d
+  - https://github.com
