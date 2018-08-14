@@ -3,15 +3,12 @@ repomisc:
     username: miacro
     password: ""
     basicurl: https://github.com
+    owner: miacro
   repos:
   - bootstrap
   - command-line-options
   - dockerwrapper
-  - name: easycert
-    local:
-      branch: master
-    remote:
-      branch: master
+  - reponame: easycert
   - emacs.d
   - lisp-koans
   - miacro-overlay

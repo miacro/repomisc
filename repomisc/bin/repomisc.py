@@ -1,6 +1,8 @@
 import pyconfigmanager as configmanager
 import argparse
 import os
+import re
+from repomisc import repoutils
 
 ARGSCHEMA = {
     "command": "",
@@ -16,12 +18,34 @@ REPOSCHEMA = configmanager.getschema(
     pickname=None)
 
 
+def urlparse(url):
+    parseresult, validate = repoutils.urlparse(url)
+    if validate:
+        return {
+            key: value
+            for key, value in parseresult.items()
+            if key in ("owner", "reponame", "basicurl")
+        }
+    else:
+        return {"reponame": url, "owner": None, "basicurl": None}
+
+
 def initrepos(reposfile):
     repomiscconfig = configmanager.getconfig(
         REPOSCHEMA, values=reposfile, pickname="repomisc")
-    print(repomiscconfig.repos)
-    for item in repomiscconfig.repos:
-        pass
+    for index, item in enumerate(repomiscconfig.repos):
+        if isinstance(item, str):
+            item = urlparse(item)
+        for name in ("owner", "basicurl"):
+            if name not in item or item[name] is None:
+                item[name] = repomiscconfig.repo[name]
+        for name, value in item.items():
+            assert (value is
+                    not None), "{} of repo {} should not be None".format(
+                        name, item["reponame"])
+        repomiscconfig.repos[index] = configmanager.getconfig(
+            schema=REPOSCHEMA["repomisc"]["repo"], values=item)
+    return repomiscconfig
 
 
 def main():

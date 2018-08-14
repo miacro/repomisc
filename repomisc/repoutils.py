@@ -11,6 +11,7 @@ class Repo():
         self.owner = None
         self.reponame = None
         self.url = None
+        self.basicurl = None
 
     def __repr__(self):
         return repr(vars(self))
@@ -39,18 +40,19 @@ class Repo():
                 "(?P<{}>{})".format(name, patterns[name]) for name in names
             ]
 
-        patterns["uri"] = "^{}://({}(:{})?@)?{}(:{})?(/{})*/{}/{}/?$".format(
+        patterns["uri"] = "{}://({}(:{})?@)?{}(:{})?(/{})*/".format(
             pattern_groups("scheme"), pattern_groups("username"),
             pattern_groups("password"), pattern_groups("hostname"),
-            pattern_groups("port"), patterns["dirname"],
-            pattern_groups("owner"), pattern_groups("reponame"))
-        patterns["scp"] = "^({}@)?{}:/?({}/)*{}/{}/?$".format(
+            pattern_groups("port"), patterns["dirname"])
+        patterns["scp"] = "({}@)?{}:/?({}/)*".format(
             pattern_groups("username"), pattern_groups("hostname"),
-            patterns["dirname"], pattern_groups("owner"),
-            pattern_groups("reponame"))
-        patterns["file"] = "^((file://)?/)?({}/)*{}/?$".format(
-            patterns["dirname"], pattern_groups("reponame"))
+            patterns["dirname"])
+        patterns["file"] = "((file://)?/)?({}/)*".format(patterns["dirname"])
 
+        for name in ("uri", "scp", "file"):
+            patterns[name] = "^(?P<basicurl>{}){}/{}/?$".format(
+                patterns[name], pattern_groups("owner"),
+                pattern_groups("reponame"))
         parseresult = re.fullmatch(patterns["uri"], repourl)
 
         def setattrs(names):
@@ -64,15 +66,21 @@ class Repo():
         if parseresult:
             setattrs([
                 "scheme", "username", "password", "hostname", "port", "owner",
-                "reponame"
+                "reponame", "basicurl"
             ])
             return
         parseresult = re.fullmatch(patterns["scp"], repourl)
         if parseresult:
-            setattrs(("username", "hostname", "owner", "reponame"))
+            setattrs(("username", "hostname", "owner", "reponame", "basicurl"))
             self.scheme = "ssh"
             return
         parseresult = re.fullmatch(patterns["file"], repourl)
         if parseresult:
-            setattrs(["reponame"])
+            setattrs(["reponame", "owner", "basicurl"])
             self.scheme = "file"
+
+
+def urlparse(url):
+    repo = Repo()
+    repo.urlparse(url)
+    return vars(repo), repo.url

@@ -3,5 +3,7 @@ repomisc:
     username: ""
     password: ""
     basicurl: ""
+    owner: ""
+    reponame: ""
   repos:
     $type: list

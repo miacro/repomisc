@@ -12,11 +12,15 @@ class RepoTest(unittest.TestCase):
             "port": None,
             "owner": None,
             "reponame": None,
-            "url": url,
+            "url": None,
+            "basicurl": None,
         }
-        target.update(
-            {key: value
-             for key, value in data.items() if value is not None})
+        if data:
+            target["url"] = url
+            target.update({
+                key: value
+                for key, value in data.items() if value is not None
+            })
         repo = Repo()
         repo.urlparse(url)
         self.assertDictEqual(vars(repo), target)
@@ -29,7 +33,8 @@ class RepoTest(unittest.TestCase):
                 "password": "bbb",
                 "hostname": "github.com",
                 "owner": "miacro",
-                "reponame": "mlmisc"
+                "reponame": "mlmisc",
+                "basicurl": "https://aaa:bbb@github.com/",
             })
 
         self.assertRepoUrl(
@@ -40,6 +45,7 @@ class RepoTest(unittest.TestCase):
                 "hostname": "github.com",
                 "owner": "miacro",
                 "reponame": "mlmisc",
+                "basicurl": "http://abc:bg@github.com/",
             })
         self.assertRepoUrl(
             "git://ok:rf@github.com/miacro/mlmisc.git/", {
@@ -49,14 +55,16 @@ class RepoTest(unittest.TestCase):
                 "hostname": "github.com",
                 "port": None,
                 "owner": "miacro",
-                "reponame": "mlmisc"
+                "reponame": "mlmisc",
+                "basicurl": "git://ok:rf@github.com/",
             })
         self.assertRepoUrl(
             "https://github.com/miacro/mlmisc/", {
                 "scheme": "https",
                 "hostname": "github.com",
                 "owner": "miacro",
-                "reponame": "mlmisc"
+                "reponame": "mlmisc",
+                "basicurl": "https://github.com/",
             })
         self.assertRepoUrl(
             "ftps://a:b@github.com:12345/miacro/mlmisc.git", {
@@ -66,35 +74,54 @@ class RepoTest(unittest.TestCase):
                 "hostname": "github.com",
                 "port": "12345",
                 "owner": "miacro",
-                "reponame": "mlmisc"
+                "reponame": "mlmisc",
+                "basicurl": "ftps://a:b@github.com:12345/",
             })
-        self.assertRepoUrl("file:///abc/dfe", {
-            "scheme": "file",
-            "reponame": "dfe"
-        })
-        self.assertRepoUrl("file:///abc/def/hij/dddd.git", {
-            "scheme": "file",
-            "reponame": "dddd"
-        })
-        self.assertRepoUrl("/abc/def/hij/dddd", {
-            "scheme": "file",
-            "reponame": "dddd"
-        })
-        self.assertRepoUrl("/abc", {"reponame": "abc", "scheme": "file"})
-        self.assertRepoUrl("/abc.git", {"reponame": "abc", "scheme": "file"})
-        self.assertRepoUrl("/abc/def/../../dddd.git", {
-            "reponame": "dddd",
-            "scheme": "file"
-        })
-        self.assertRepoUrl("abc", {"reponame": "abc", "scheme": "file"})
-        self.assertRepoUrl("./abc/../dfe/daff/dddd.git/", {
-            "reponame": "dddd",
-            "scheme": "file"
-        })
-        self.assertRepoUrl("../ddd/../dfidf/drt/gggagi.git", {
-            "reponame": "gggagi",
-            "scheme": "file"
-        })
+        self.assertRepoUrl(
+            "file:///abc/dfe", {
+                "scheme": "file",
+                "owner": "abc",
+                "reponame": "dfe",
+                "basicurl": "file:///",
+            })
+        self.assertRepoUrl(
+            "file:///abc/def/hij/dddd.git", {
+                "scheme": "file",
+                "owner": "hij",
+                "reponame": "dddd",
+                "basicurl": "file:///abc/def/",
+            })
+        self.assertRepoUrl(
+            "/abc/def/hij/dddd", {
+                "scheme": "file",
+                "owner": "hij",
+                "reponame": "dddd",
+                "basicurl": "/abc/def/",
+            })
+        self.assertRepoUrl("/abc", None)
+        self.assertRepoUrl("/abc.git", None)
+        self.assertRepoUrl(
+            "/abc/def/../../dddd.git", {
+                "reponame": "dddd",
+                "owner": "..",
+                "scheme": "file",
+                "basicurl": "/abc/def/../",
+            })
+        self.assertRepoUrl("abc", {})
+        self.assertRepoUrl(
+            "./abc/../dfe/daff/dddd.git/", {
+                "reponame": "dddd",
+                "owner": "daff",
+                "scheme": "file",
+                "basicurl": "./abc/../dfe/",
+            })
+        self.assertRepoUrl(
+            "../ddd/../dfidf/drt/gggagi.git", {
+                "reponame": "gggagi",
+                "owner": "drt",
+                "scheme": "file",
+                "basicurl": "../ddd/../dfidf/",
+            })
         self.assertRepoUrl(
             "git@github.com:~/miacro/mlmisc.git", {
                 "reponame": "mlmisc",
@@ -102,6 +129,7 @@ class RepoTest(unittest.TestCase):
                 "hostname": "github.com",
                 "owner": "miacro",
                 "scheme": "ssh",
+                "basicurl": "git@github.com:~/",
             })
         self.assertRepoUrl(
             "test@github.com:/abc/def/aaa.git", {
@@ -110,4 +138,5 @@ class RepoTest(unittest.TestCase):
                 "hostname": "github.com",
                 "owner": "def",
                 "scheme": "ssh",
+                "basicurl": "test@github.com:/abc/",
             })
