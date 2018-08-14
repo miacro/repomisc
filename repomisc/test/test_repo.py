@@ -11,7 +11,8 @@ class RepoTest(unittest.TestCase):
             "hostname": None,
             "port": None,
             "owner": None,
-            "reponame": None
+            "reponame": None,
+            "url": url,
         }
         target.update(
             {key: value

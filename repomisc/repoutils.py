@@ -10,6 +10,7 @@ class Repo():
         self.port = None
         self.owner = None
         self.reponame = None
+        self.url = None
 
     def __repr__(self):
         return repr(vars(self))
@@ -51,17 +52,27 @@ class Repo():
             patterns["dirname"], pattern_groups("reponame"))
 
         parseresult = re.fullmatch(patterns["uri"], repourl)
-        if parseresult:
+
+        def setattrs(names):
             for name in vars(self).keys():
-                setattr(self, name, parseresult.group(name))
+                if name in names:
+                    setattr(self, name, parseresult.group(name))
+                else:
+                    setattr(self, name, None)
+            self.url = parseresult.string
+
+        if parseresult:
+            setattrs([
+                "scheme", "username", "password", "hostname", "port", "owner",
+                "reponame"
+            ])
             return
         parseresult = re.fullmatch(patterns["scp"], repourl)
         if parseresult:
+            setattrs(("username", "hostname", "owner", "reponame"))
             self.scheme = "ssh"
-            for name in ("username", "hostname", "owner", "reponame"):
-                setattr(self, name, parseresult.group(name))
             return
         parseresult = re.fullmatch(patterns["file"], repourl)
         if parseresult:
+            setattrs(["reponame"])
             self.scheme = "file"
-            self.reponame = parseresult.group("reponame")
