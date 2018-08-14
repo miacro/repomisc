@@ -21,8 +21,8 @@ def initrepos(reposfile):
         REPOSCHEMA, values=reposfile, pickname="repomisc")
     print(repomiscconfig.repos)
     for item in repomiscconfig.repos:
-        if isinstance(item, str) and giturlparse.validate(item):
-            pass
+        pass
+
 
 def main():
     parser = argparse.ArgumentParser(
