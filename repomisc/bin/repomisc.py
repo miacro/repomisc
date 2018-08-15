@@ -18,37 +18,29 @@ REPOSCHEMA = configmanager.getschema(
     pickname=None)
 
 
-def urlparse(url):
-    parseresult, validate = repoutils.urlparse(url)
-    if validate:
-        return {
-            key: value
-            for key, value in parseresult.items()
-            if key in ("owner", "reponame", "basicurl")
-        }
-    else:
-        return {"reponame": url, "owner": None, "basicurl": None}
-
-
 def initrepos(reposfile):
     repomiscconfig = configmanager.getconfig(
         REPOSCHEMA, values=reposfile, pickname="repomisc")
     for index, item in enumerate(repomiscconfig.repos):
         if isinstance(item, str):
-            item = urlparse(item)
+            repo, validate = repoutils.urlparse(item)
+            if not validate:
+                repo.reponame = item
+        else:
+            repo = repoutils.Repo(**item)
         for name in ("owner", "basicurl"):
-            if name not in item or item[name] is None:
-                item[name] = repomiscconfig.repo[name]
-        if "repopath" not in item or item["repopath"] is None:
-            item["repopath"] = os.path.join(repomiscconfig.repo.repopath,
-                                            item["reponame"])
+            if getattr(repo, name) is None:
+                setattr(repo, name, repomiscconfig.repo[name])
+        if repo.repopath is None:
+            repo.repopath = os.path.join(repomiscconfig.repo.repopath,
+                                         repo.reponame)
         for name in ("reponame", "owner", "basicurl", "repopath"):
-            assert (item[name] is
-                    not None), "{} of repo {} should not be None".format(
+            assert (getattr(repo, name) is
+                    not None), "{} of repo {} must not be None".format(
                         name, item["reponame"])
-        repomiscconfig.repos[index] = configmanager.getconfig(
-            schema=REPOSCHEMA["repomisc"]["repo"], values=item)
-    print(repomiscconfig)
+        repomiscconfig.repos[index] = repo
+    for repo in repomiscconfig.repos:
+        print(repo.url())
     return repomiscconfig
 
 

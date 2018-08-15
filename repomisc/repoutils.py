@@ -2,16 +2,16 @@ import re
 
 
 class Repo():
-    def __init__(self):
-        self.scheme = None
-        self.username = None
-        self.password = None
-        self.hostname = None
-        self.port = None
-        self.owner = None
-        self.reponame = None
-        self.url = None
-        self.basicurl = None
+    def __init__(self, **kwargs):
+        attrnames = ("scheme", "username", "password", "hostname", "port",
+                     "owner", "reponame", "basicurl", "repopath")
+        for name in attrnames:
+            if name in kwargs:
+                setattr(self, name, kwargs[name])
+            else:
+                setattr(self, name, None)
+        for key in kwargs:
+            assert key in attrnames, "Unrecognized attr '{}'".format(key)
 
     def __repr__(self):
         return repr(vars(self))
@@ -20,6 +20,14 @@ class Repo():
         if name == "reponame" and value and value[-4:] == ".git":
             value = value[:-4]
         return super().__setattr__(name, value)
+
+    def url(self):
+        for name in ("basicurl", "reponame"):
+            assert getattr(
+                self, name) is not None, "required attribute {}".format(name)
+        if self.owner is None:
+            return "{}/{}.git".format(self.basicurl, self.reponame)
+        return "{}/{}/{}.git".format(self.basicurl, self.owner, self.reponame)
 
     def urlparse(self, repourl):
         patterns = {
@@ -80,11 +88,9 @@ class Repo():
                     setattr(self, name, group_value(name))
                 else:
                     setattr(self, name, None)
-            self.url = group_value(None)
 
         if not matchresult:
-            setattrs([])
-            return
+            return False
         if group_value("uri"):
             setattrs([
                 "scheme", "username", "password", "hostname", "port", "owner",
@@ -99,9 +105,12 @@ class Repo():
             setattrs(["reponame", "owner"])
             self.scheme = "file"
             self.basicurl = group_value("file")
+        else:
+            return False
+        return True
 
 
 def urlparse(url):
     repo = Repo()
-    repo.urlparse(url)
-    return vars(repo), repo.url
+    validate = repo.urlparse(url)
+    return repo, validate
