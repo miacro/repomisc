@@ -39,12 +39,16 @@ def initrepos(reposfile):
         for name in ("owner", "basicurl"):
             if name not in item or item[name] is None:
                 item[name] = repomiscconfig.repo[name]
-        for name, value in item.items():
-            assert (value is
+        if "repopath" not in item or item["repopath"] is None:
+            item["repopath"] = os.path.join(repomiscconfig.repo.repopath,
+                                            item["reponame"])
+        for name in ("reponame", "owner", "basicurl", "repopath"):
+            assert (item[name] is
                     not None), "{} of repo {} should not be None".format(
                         name, item["reponame"])
         repomiscconfig.repos[index] = configmanager.getconfig(
             schema=REPOSCHEMA["repomisc"]["repo"], values=item)
+    print(repomiscconfig)
     return repomiscconfig
 
 

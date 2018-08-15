@@ -4,6 +4,7 @@ repomisc:
     password: ""
     basicurl: https://github.com
     owner: miacro
+    repopath: "repositories"
   repos:
   - bootstrap
   - command-line-options
