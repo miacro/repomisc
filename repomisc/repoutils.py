@@ -33,7 +33,7 @@ class Repo():
             "dirname": "([^/]+)",
         }
 
-        def pattern_groups(names):
+        def name_patterns(names):
             if isinstance(names, str):
                 return "(?P<{}>{})".format(names, patterns[names])
             return [
@@ -41,43 +41,64 @@ class Repo():
             ]
 
         patterns["uri"] = "{}://({}(:{})?@)?{}(:{})?(/{})*/".format(
-            pattern_groups("scheme"), pattern_groups("username"),
-            pattern_groups("password"), pattern_groups("hostname"),
-            pattern_groups("port"), patterns["dirname"])
-        patterns["scp"] = "({}@)?{}:/?({}/)*".format(
-            pattern_groups("username"), pattern_groups("hostname"),
+            name_patterns("scheme"), name_patterns("username"),
+            name_patterns("password"), name_patterns("hostname"),
+            name_patterns("port"), patterns["dirname"])
+        patterns["scp"] = "{}@{}:/?({}/)*".format(
+            name_patterns("username"), name_patterns("hostname"),
             patterns["dirname"])
         patterns["file"] = "((file://)?/)?({}/)*".format(patterns["dirname"])
 
-        for name in ("uri", "scp", "file"):
-            patterns[name] = "^(?P<basicurl>{}){}/{}/?$".format(
-                patterns[name], pattern_groups("owner"),
-                pattern_groups("reponame"))
-        parseresult = re.fullmatch(patterns["uri"], repourl)
+        def fullmatch():
+            for postfix in [
+                    "{}/{}/?".format(*name_patterns(["owner", "reponame"])),
+                    "{}/?".format(name_patterns("reponame"))
+            ]:
+                for name in ["uri", "scp", "file"]:
+                    scheme_pattern = "^{}{}$".format(
+                        name_patterns(name), postfix)
+                    parseresult = re.fullmatch(scheme_pattern, repourl)
+                    if parseresult:
+                        return parseresult
+
+        matchresult = fullmatch()
+
+        def group_value(name):
+            try:
+                if not name:
+                    if not matchresult:
+                        return None
+                    else:
+                        return matchresult.string
+                return matchresult.group(name)
+            except IndexError:
+                return None
 
         def setattrs(names):
             for name in vars(self).keys():
                 if name in names:
-                    setattr(self, name, parseresult.group(name))
+                    setattr(self, name, group_value(name))
                 else:
                     setattr(self, name, None)
-            self.url = parseresult.string
+            self.url = group_value(None)
 
-        if parseresult:
+        if not matchresult:
+            setattrs([])
+            return
+        if group_value("uri"):
             setattrs([
                 "scheme", "username", "password", "hostname", "port", "owner",
-                "reponame", "basicurl"
+                "reponame"
             ])
-            return
-        parseresult = re.fullmatch(patterns["scp"], repourl)
-        if parseresult:
-            setattrs(("username", "hostname", "owner", "reponame", "basicurl"))
-            self.scheme = "ssh"
-            return
-        parseresult = re.fullmatch(patterns["file"], repourl)
-        if parseresult:
-            setattrs(["reponame", "owner", "basicurl"])
+            self.basicurl = group_value("uri")
+        elif group_value("scp"):
+            setattrs(("username", "hostname", "owner", "reponame"))
+            self.scheme = "scp"
+            self.basicurl = group_value("scp")
+        elif group_value("file"):
+            setattrs(["reponame", "owner"])
             self.scheme = "file"
+            self.basicurl = group_value("file")
 
 
 def urlparse(url):
