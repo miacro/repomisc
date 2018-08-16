@@ -1,5 +1,5 @@
 import unittest
-from repomisc.repoutils import Repo
+from repomisc.repoutils import urlparse
 
 
 class RepoTest(unittest.TestCase):
@@ -12,18 +12,17 @@ class RepoTest(unittest.TestCase):
             "port": None,
             "owner": None,
             "reponame": None,
-            "url": None,
             "basicurl": None,
         }
+        result = urlparse(url)
         if data:
-            target["url"] = url
             target.update({
                 key: value
                 for key, value in data.items() if value is not None
             })
-        repo = Repo()
-        repo.urlparse(url)
-        self.assertDictEqual(vars(repo), target)
+            self.assertDictEqual(result, target)
+        else:
+            self.assertIsNone(result)
 
     def test_urlparse(self):
         self.assertRepoUrl(

@@ -1,14 +1,15 @@
 import pyconfigmanager as configmanager
 import argparse
 import os
-import re
 from repomisc import repoutils
+import subprocess
 
 ARGSCHEMA = {
     "command": "",
     "repos": "",
     "run": {},
-    "git": {},
+    "clone": {},
+    "pull": {},
 }
 
 REPOSCHEMA = configmanager.getschema(
@@ -23,11 +24,12 @@ def initrepos(reposfile):
         REPOSCHEMA, values=reposfile, pickname="repomisc")
     for index, item in enumerate(repomiscconfig.repos):
         if isinstance(item, str):
-            repo, validate = repoutils.urlparse(item)
-            if not validate:
-                repo.reponame = item
-        else:
-            repo = repoutils.Repo(**item)
+            parseresult = repoutils.urlparse(item)
+            if parseresult is None:
+                item = {"reponame": item}
+            else:
+                item = parseresult
+        repo = repoutils.Repo(**item)
         for name in ("owner", "basicurl"):
             if getattr(repo, name) is None:
                 setattr(repo, name, repomiscconfig.repo[name])
@@ -41,7 +43,15 @@ def initrepos(reposfile):
         repomiscconfig.repos[index] = repo
     for repo in repomiscconfig.repos:
         print(repo.url())
+        print(repo.repopath)
     return repomiscconfig
+
+
+def repo_clone(repos):
+    for repo in repos:
+        if not os.path.exists(repo.repopath):
+            os.makedirs(repo.repopath)
+        result = subprocess.run(["git", "clone", repo.url(), repo.repopath])
 
 
 def main():
@@ -61,7 +71,8 @@ def main():
         config.dump_config(
             filename=config.config.dump, config_name="config.dump", exit=True)
     configmanager.logging.config(level=config.logging.verbosity)
-    initrepos(config.repos)
+    repomiscconfig = initrepos(config.repos)
+    repo_clone(repomiscconfig.repos)
 
 
 if __name__ == "__main__":
