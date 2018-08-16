@@ -26,8 +26,8 @@ class Repo():
             assert getattr(
                 self, name) is not None, "required attribute {}".format(name)
         if self.owner is None:
-            return "{}/{}.git".format(self.basicurl, self.reponame)
-        return "{}/{}/{}.git".format(self.basicurl, self.owner, self.reponame)
+            return "{}{}.git".format(self.basicurl, self.reponame)
+        return "{}{}/{}.git".format(self.basicurl, self.owner, self.reponame)
 
 
 def urlparse(repourl):
