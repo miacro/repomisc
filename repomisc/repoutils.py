@@ -17,8 +17,11 @@ class Repo():
         return repr(vars(self))
 
     def __setattr__(self, name, value):
-        if name == "reponame" and value and value[-4:] == ".git":
-            value = value[:-4]
+        if isinstance(value, str) and value:
+            if name == "reponame" and value[-4:] == ".git":
+                value = value[:-4]
+            if name == "basicurl" and value[-1:] != "/":
+                value = value + "/"
         return super().__setattr__(name, value)
 
     def url(self):
