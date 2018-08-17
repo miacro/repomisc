@@ -13,6 +13,12 @@ ARGSCHEMA = {
     "run": {},
     "clone": {},
     "pull": {},
+    "push": {},
+    "status": {},
+    "search": {
+        "repodirs": [],
+        "dumprepos": True,
+    }
 }
 
 REPOSCHEMA = configmanager.getschema(
@@ -151,7 +157,10 @@ def main():
         }
     ])
     config.update_values_by_argument_parser(
-        parser=parser, subcommands=["run", "git"])
+        parser=parser,
+        subcommands=[
+            "run", "update", "pull", "push", "clone", "status", "search"
+        ])
     if config.config.dump:
         config.dump_config(
             filename=config.config.dump, config_name="config.dump", exit=True)
