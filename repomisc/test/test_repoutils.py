@@ -115,7 +115,8 @@ class RepoTest(unittest.TestCase):
                 "scheme": "file",
                 "basicurl": "/abc/def/../",
             })
-        self.assertRepoUrl("abc", {})
+        self.assertRepoUrl("./abc", {"reponame": "abc", "owner": "."})
+        self.assertRepoUrl("abc", {"reponame": "abc"})
         self.assertRepoUrl(
             "./abc/../dfe/daff/dddd.git/", {
                 "reponame": "dddd",
@@ -148,3 +149,8 @@ class RepoTest(unittest.TestCase):
                 "scheme": "scp",
                 "basicurl": "test@github.com:/abc/",
             })
+        self.assertRepoUrl("tensorflow/models", {
+            "reponame": "models",
+            "owner": "tensorflow"
+        })
+        self.assertRepoUrl("tensorflow", {"reponame": "tensorflow"})

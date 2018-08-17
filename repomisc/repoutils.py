@@ -64,8 +64,12 @@ def urlparse(repourl):
                 "{}/{}/?".format(*name_patterns(["owner", "reponame"])),
                 "{}/?".format(name_patterns("reponame"))
         ]:
-            for name in ["uri", "scp", "file"]:
-                scheme_pattern = "^{}{}$".format(name_patterns(name), postfix)
+            for name in ["uri", "scp", "file", ""]:
+                if name:
+                    scheme_pattern = "^{}{}$".format(
+                        name_patterns(name), postfix)
+                else:
+                    scheme_pattern = "^$".format(postfix)
                 parseresult = re.fullmatch(scheme_pattern, repourl)
                 if parseresult:
                     return parseresult
@@ -108,7 +112,8 @@ def urlparse(repourl):
         result["scheme"] = "file"
         result["basicurl"] = group_value("file")
     else:
-        return None
+        result["reponame"] = group_value("reponame")
+        result["owner"] = group_value("owner")
     if result["reponame"] and result["reponame"][-4:] == ".git":
         result["reponame"] = result["reponame"][:-4]
     return result

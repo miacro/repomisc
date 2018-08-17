@@ -5,6 +5,7 @@ from repomisc import repoutils
 import subprocess
 import pygit2
 import logging
+import datetime
 
 ARGSCHEMA = {
     "command": "",
@@ -28,9 +29,10 @@ def init_repomisc_config(reposfile):
         if isinstance(item, str):
             parseresult = repoutils.urlparse(item)
             if parseresult is None:
-                item = {"reponame": item}
-            else:
-                item = parseresult
+                logging.error("Invalid repo url: {}".format(item))
+                repomiscconfig.repos[index] = None
+                continue
+            item = parseresult
         repo = repoutils.Repo(**item)
         for name in ("owner", "basicurl"):
             if getattr(repo, name) is None:
@@ -43,6 +45,9 @@ def init_repomisc_config(reposfile):
                     not None), "{} of repo {} must not be None".format(
                         name, item["reponame"])
         repomiscconfig.repos[index] = repo
+    repomiscconfig.repos = [
+        item for item in repomiscconfig.repos if item is not None
+    ]
     return repomiscconfig
 
 
@@ -54,16 +59,62 @@ def repo_clone(repos):
 
 
 class GitRemoteCallbacks(pygit2.remote.RemoteCallbacks):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.lasttime = None
+        self.lastreceived = 0
+        self.lastspeed = 0
+        self.lastlength = 0
+
+    def readableunits(self, value):
+        power = 1024
+        for unit in ("Bytes", "KiB", "MiB", "GiB", "TiB"):
+            if value >= power:
+                value = value / power
+            else:
+                break
+        return value, unit
+
     def transfer_progress(self, stats):
-        print("\r", end="")
-        print(
-            "{} {} {} {} {} {} {}".format(
-                stats.indexed_deltas, stats.indexed_objects,
-                stats.local_objects, stats.received_bytes,
-                stats.received_objects, stats.total_deltas,
-                stats.total_objects),
-            end="",
-            flush=True)
+        """
+        Args:
+          stats.indexed_deltas,   stats.indexed_objects
+          stats.local_objects,    stats.received_bytes
+          stats.received_objects, stats.total_deltas
+          stats.total_objects
+        """
+        try:
+            currenttime = datetime.datetime.now()
+            if self.lasttime is not None:
+                interval = currenttime - self.lasttime
+                interval = interval.total_seconds()
+            else:
+                interval = 0
+                self.lasttime = currenttime
+            if interval > 1 or (stats.indexed_objects == stats.total_objects):
+                if interval > 1:
+                    self.lastspeed = (
+                        stats.received_bytes - self.lastreceived) / interval
+                speed, speed_unit = self.readableunits(self.lastspeed)
+                received_bytes, received_bytes_unit = self.readableunits(
+                    stats.received_bytes)
+                clear_message = "".join([" " for _ in range(self.lastlength)])
+                message = (
+                    "Receiving objects:" +
+                    " {:>2.2%} ({}/{}), {:.2f} {} | {:.2f} {}/s").format(
+                        stats.received_objects / stats.total_objects,
+                        stats.received_objects, stats.total_objects,
+                        received_bytes, received_bytes_unit, speed, speed_unit)
+                print("\r{}\r".format(clear_message), end="")
+                if stats.indexed_objects == stats.total_objects:
+                    print(message, flush=True)
+                else:
+                    print(message, end="", flush=True)
+                self.lasttime = currenttime
+                self.lastreceived = stats.received_bytes
+                self.lastlength = len(message)
+        except Exception as e:
+            logging.error(e)
 
 
 def init_repos(config):
