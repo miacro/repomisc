@@ -6,5 +6,6 @@ repomisc:
     owner: ""
     reponame: ""
     repopath: ""
+    refspecs: []
   repos:
     $type: list

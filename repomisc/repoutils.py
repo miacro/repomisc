@@ -4,7 +4,7 @@ import re
 class Repo():
     def __init__(self, **kwargs):
         attrnames = ("scheme", "username", "password", "hostname", "port",
-                     "owner", "reponame", "basicurl", "repopath")
+                     "owner", "reponame", "basicurl", "repopath", "refspecs")
         for name in attrnames:
             if name in kwargs:
                 setattr(self, name, kwargs[name])
