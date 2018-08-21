@@ -12,17 +12,14 @@ ARGSCHEMA = {
     "command": "",
     "repos": "",
     "run": {},
-    "git": {
-        "clone": {},
-        "pull": {},
-        "push": {},
-        "status": {},
-    },
     "search": {
         "repodirs": [],
         "dumprepos": True,
     },
+    "init": {},
     "update": {},
+    "push": {},
+    "status": {},
 }
 
 REPOSCHEMA = configmanager.getschema(
@@ -127,15 +124,16 @@ class GitRemoteCallbacks(pygit2.remote.RemoteCallbacks):
             logging.error(e)
 
 
-def init_repos(config):
+def init_repos(config, clone=False):
     repos = {}
     for repoconfig in config.repos:
         repopath = pygit2.discover_repository(repoconfig.repopath)
         if repopath:
-            logging.info("Repo {} already exists in {}".format(
-                repoconfig.reponame, repoconfig.repopath))
+            if clone:
+                logging.info("Repo {} already exists in {}".format(
+                    repoconfig.reponame, repoconfig.repopath))
             repos[repoconfig.reponame] = pygit2.Repository(repopath)
-        else:
+        elif clone:
             try:
                 logging.info("Cloning {} into {}".format(
                     repoconfig.url(), repoconfig.repopath))
@@ -146,6 +144,8 @@ def init_repos(config):
                 repos[repoconfig.reponame] = repo
             except pygit2.GitError as err:
                 logging.error(err)
+        else:
+            raise Exception("Repo {} not found".format(repoconfig.reponame))
     return repos
 
 
@@ -163,12 +163,9 @@ def main():
     config.update_values_by_argument_parser(
         parser=parser,
         subcommands={
-            "git": {
-                "pull": True,
-                "push": True,
-                "clone": True,
-                "status": True,
-            },
+            "init": True,
+            "status": True,
+            "push": True,
             "search": True,
             "run": True,
             "update": True,
@@ -179,9 +176,18 @@ def main():
     configmanager.logging.config(
         level=config.logging.verbosity, format="%(levelname)s: %(message)s")
     repomiscconfig = init_repomisc_config(config.repos)
-    repos = init_repos(repomiscconfig)
-    print(repos)
-    print(config.command)
+    if config.command == "init":
+        repos = init_repos(repomiscconfig, clone=True)
+        return
+    repos = init_repos(repomiscconfig, clone=False)
+    if config.command == "update":
+        pass
+    elif config.command == "push":
+        pass
+    elif config.command == "status":
+        pass
+    else:
+        print(repomiscconfig)
 
 
 if __name__ == "__main__":
