@@ -6,6 +6,7 @@ import subprocess
 import pygit2
 import logging
 import datetime
+import sys
 
 ARGSCHEMA = {
     "command": "",
@@ -20,7 +21,8 @@ ARGSCHEMA = {
     "search": {
         "repodirs": [],
         "dumprepos": True,
-    }
+    },
+    "update": {},
 }
 
 REPOSCHEMA = configmanager.getschema(
@@ -113,11 +115,11 @@ class GitRemoteCallbacks(pygit2.remote.RemoteCallbacks):
                         stats.received_objects / stats.total_objects,
                         stats.received_objects, stats.total_objects,
                         received_bytes, received_bytes_unit, speed, speed_unit)
-                print("\r{}\r".format(clear_message), end="")
+                print("\r{}\r".format(clear_message), end="", file=sys.stderr)
                 if stats.indexed_objects == stats.total_objects:
-                    print(message, flush=True)
+                    print(message, flush=True, file=sys.stderr)
                 else:
-                    print(message, end="", flush=True)
+                    print(message, end="", flush=True, file=sys.stderr)
                 self.lasttime = currenttime
                 self.lastreceived = stats.received_bytes
                 self.lastlength = len(message)
@@ -162,14 +164,14 @@ def main():
         parser=parser,
         subcommands={
             "git": {
-                "run": True,
-                "update": True,
                 "pull": True,
                 "push": True,
                 "clone": True,
                 "status": True,
             },
-            "search": True
+            "search": True,
+            "run": True,
+            "update": True,
         })
     if config.config.dump:
         config.dump_config(
@@ -179,6 +181,7 @@ def main():
     repomiscconfig = init_repomisc_config(config.repos)
     repos = init_repos(repomiscconfig)
     print(repos)
+    print(config.command)
 
 
 if __name__ == "__main__":
