@@ -11,10 +11,12 @@ ARGSCHEMA = {
     "command": "",
     "repos": "",
     "run": {},
-    "clone": {},
-    "pull": {},
-    "push": {},
-    "status": {},
+    "git": {
+        "clone": {},
+        "pull": {},
+        "push": {},
+        "status": {},
+    },
     "search": {
         "repodirs": [],
         "dumprepos": True,
@@ -158,9 +160,17 @@ def main():
     ])
     config.update_values_by_argument_parser(
         parser=parser,
-        subcommands=[
-            "run", "update", "pull", "push", "clone", "status", "search"
-        ])
+        subcommands={
+            "git": {
+                "run": True,
+                "update": True,
+                "pull": True,
+                "push": True,
+                "clone": True,
+                "status": True,
+            },
+            "search": True
+        })
     if config.config.dump:
         config.dump_config(
             filename=config.config.dump, config_name="config.dump", exit=True)
