@@ -44,7 +44,7 @@ class Repo():
         self.__repo = git.clone(self.url(), self.repopath)
         return self
 
-    def init_repo(self, clone=True, exists=True, verbosity=None):
+    def init_repo(self, clone=True, exists=True, empty=True, verbosity=None):
         repopath = git.discover(self.repopath)
         if repopath:
             if exists:
