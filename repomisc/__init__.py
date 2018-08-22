@@ -59,7 +59,7 @@ class Repo():
                     self.reponame, self.repopath))
         else:
             if clone:
-                return self.clone()
+                return self.clone(verbosity=verbosity)
             else:
                 raise Exception("Repo {} not foune".format(self.reponame))
         return self

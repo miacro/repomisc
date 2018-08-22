@@ -103,10 +103,10 @@ def main():
     repomiscconfig = init_repomisc_config(config.repos)
     if config.command == "init":
         repos = init_repos(
-            repomiscconfig, clone=True, verbosity=config.logging.verbosity)
+            repomiscconfig, clone=True, verbosity="INFO")
         return
     repos = init_repos(
-        repomiscconfig, clone=False, verbosity=config.logging.verbosity)
+        repomiscconfig, clone=False, verbosity="INFO")
     if config.command == "update":
         pass
     elif config.command == "push":
