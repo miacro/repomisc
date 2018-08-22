@@ -1,36 +1,5 @@
 import re
-
-
-class Repo():
-    def __init__(self, **kwargs):
-        attrnames = ("scheme", "username", "password", "hostname", "port",
-                     "owner", "reponame", "basicurl", "repopath", "refspecs")
-        for name in attrnames:
-            if name in kwargs:
-                setattr(self, name, kwargs[name])
-            else:
-                setattr(self, name, None)
-        for key in kwargs:
-            assert key in attrnames, "Unrecognized attr '{}'".format(key)
-
-    def __repr__(self):
-        return repr(vars(self))
-
-    def __setattr__(self, name, value):
-        if isinstance(value, str) and value:
-            if name == "reponame" and value[-4:] == ".git":
-                value = value[:-4]
-            if name == "basicurl" and value[-1:] != "/":
-                value = value + "/"
-        return super().__setattr__(name, value)
-
-    def url(self):
-        for name in ("basicurl", "reponame"):
-            assert getattr(
-                self, name) is not None, "required attribute {}".format(name)
-        if self.owner is None:
-            return "{}{}.git".format(self.basicurl, self.reponame)
-        return "{}{}/{}.git".format(self.basicurl, self.owner, self.reponame)
+import logging
 
 
 def urlparse(repourl):
@@ -117,3 +86,10 @@ def urlparse(repourl):
     if result["reponame"] and result["reponame"][-4:] == ".git":
         result["reponame"] = result["reponame"][:-4]
     return result
+
+
+def get_logging_level(verbosity):
+    if isinstance(verbosity, int):
+        return verbosity
+    else:
+        return logging.getLevelName(verbosity)

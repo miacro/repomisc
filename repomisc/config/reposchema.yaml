@@ -8,4 +8,4 @@ repomisc:
     repopath: ""
     refspecs: []
   repos:
-    $type: list
+    $value:

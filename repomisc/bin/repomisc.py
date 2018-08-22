@@ -1,12 +1,11 @@
 import pyconfigmanager as configmanager
 import argparse
 import os
+import repomisc
 from repomisc import repoutils
 import subprocess
-import pygit2
 import logging
-import datetime
-import sys
+from repomisc import errors
 
 ARGSCHEMA = {
     "command": "",
@@ -40,7 +39,7 @@ def init_repomisc_config(reposfile):
                 repomiscconfig.repos[index] = None
                 continue
             item = parseresult
-        repo = repoutils.Repo(**item)
+        repo = repomisc.Repo(**item)
         for name in ("owner", "basicurl"):
             if getattr(repo, name) is None:
                 setattr(repo, name, repomiscconfig.repo[name])
@@ -65,87 +64,14 @@ def repo_clone(repos):
         result = subprocess.run(["git", "clone", repo.url(), repo.repopath])
 
 
-class GitRemoteCallbacks(pygit2.remote.RemoteCallbacks):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.lasttime = None
-        self.lastreceived = 0
-        self.lastspeed = 0
-        self.lastlength = 0
-
-    def readableunits(self, value):
-        power = 1024
-        for unit in ("Bytes", "KiB", "MiB", "GiB", "TiB"):
-            if value >= power:
-                value = value / power
-            else:
-                break
-        return value, unit
-
-    def transfer_progress(self, stats):
-        """
-        Args:
-          stats.indexed_deltas,   stats.indexed_objects
-          stats.local_objects,    stats.received_bytes
-          stats.received_objects, stats.total_deltas
-          stats.total_objects
-        """
-        try:
-            currenttime = datetime.datetime.now()
-            if self.lasttime is not None:
-                interval = currenttime - self.lasttime
-                interval = interval.total_seconds()
-            else:
-                interval = 0
-                self.lasttime = currenttime
-            if interval > 1 or (stats.indexed_objects == stats.total_objects):
-                if interval > 1:
-                    self.lastspeed = (
-                        stats.received_bytes - self.lastreceived) / interval
-                speed, speed_unit = self.readableunits(self.lastspeed)
-                received_bytes, received_bytes_unit = self.readableunits(
-                    stats.received_bytes)
-                clear_message = "".join([" " for _ in range(self.lastlength)])
-                message = (
-                    "Receiving objects:" +
-                    " {:>2.2%} ({}/{}), {:.2f} {} | {:.2f} {}/s").format(
-                        stats.received_objects / stats.total_objects,
-                        stats.received_objects, stats.total_objects,
-                        received_bytes, received_bytes_unit, speed, speed_unit)
-                print("\r{}\r".format(clear_message), end="", file=sys.stderr)
-                if stats.indexed_objects == stats.total_objects:
-                    print(message, flush=True, file=sys.stderr)
-                else:
-                    print(message, end="", flush=True, file=sys.stderr)
-                self.lasttime = currenttime
-                self.lastreceived = stats.received_bytes
-                self.lastlength = len(message)
-        except Exception as e:
-            logging.error(e)
-
-
-def init_repos(config, clone=False):
+def init_repos(config, clone=True, exists=True, verbosity=None):
     repos = {}
-    for repoconfig in config.repos:
-        repopath = pygit2.discover_repository(repoconfig.repopath)
-        if repopath:
-            if clone:
-                logging.info("Repo {} already exists in {}".format(
-                    repoconfig.reponame, repoconfig.repopath))
-            repos[repoconfig.reponame] = pygit2.Repository(repopath)
-        elif clone:
-            try:
-                logging.info("Cloning {} into {}".format(
-                    repoconfig.url(), repoconfig.repopath))
-                repo = pygit2.clone_repository(
-                    repoconfig.url(),
-                    repoconfig.repopath,
-                    callbacks=GitRemoteCallbacks())
-                repos[repoconfig.reponame] = repo
-            except pygit2.GitError as err:
-                logging.error(err)
-        else:
-            raise Exception("Repo {} not found".format(repoconfig.reponame))
+    for repo in config.repos:
+        try:
+            repo.init_repo(exists=exists, clone=clone, verbosity=verbosity)
+            repos[repo.reponame] = repo
+        except errors.GitError as e:
+            logging.error(e)
     return repos
 
 
@@ -171,15 +97,16 @@ def main():
             "update": True,
         })
     if config.config.dump:
-        config.dump_config(
-            filename=config.config.dump, config_name="config.dump", exit=True)
+        config.dump_config(filename=config.config.dump, exit=True)
     configmanager.logging.config(
         level=config.logging.verbosity, format="%(levelname)s: %(message)s")
     repomiscconfig = init_repomisc_config(config.repos)
     if config.command == "init":
-        repos = init_repos(repomiscconfig, clone=True)
+        repos = init_repos(
+            repomiscconfig, clone=True, verbosity=config.logging.verbosity)
         return
-    repos = init_repos(repomiscconfig, clone=False)
+    repos = init_repos(
+        repomiscconfig, clone=False, verbosity=config.logging.verbosity)
     if config.command == "update":
         pass
     elif config.command == "push":
