@@ -1,6 +1,7 @@
 from . import git
 import logging
 from . import repoutils
+from . import errors
 
 
 class Repo():
@@ -44,22 +45,23 @@ class Repo():
         self.__repo = git.clone(self.url(), self.repopath)
         return self
 
-    def init_repo(self, clone=True, exists=True, empty=True, verbosity=None):
+    def init_repo(self, exists=True, empty=False, verbosity=None):
         repopath = git.discover(self.repopath)
         if repopath:
-            if exists:
+            if empty:
+                raise errors.RepoError(
+                    "already exists in {}".format(self.repopath),
+                    reponame=self.reponame)
+            else:
                 if verbosity:
                     logging.log(
                         repoutils.get_logging_level(verbosity),
                         "Repo {} already exists in {}".format(
                             self.reponame, self.repopath))
                 self.__repo = git.repo(repopath)
-            else:
-                raise Exception("Repo {} already exists in {}".format(
-                    self.reponame, self.repopath))
         else:
-            if clone:
-                return self.clone(verbosity=verbosity)
+            if exists:
+                raise errors.RepoError("not found", reponame=self.reponame)
             else:
-                raise Exception("Repo {} not foune".format(self.reponame))
+                return self.clone(verbosity=verbosity)
         return self

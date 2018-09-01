@@ -15,11 +15,11 @@ repomisc:
   - miacro-overlay
   - miacropp
   - minesweeper
-  - https://a:b@github.com/miacro/mlmisc
+  - https://github.com/miacro/mlmisc
   - nginx.d
   - online-judge
   - pkget
-  - git@github.com:miacro/profiles.git
+  - https://github.com/miacro/profiles.git
   - pyconfigmanager
   - repomisc
   - stumpwm.d

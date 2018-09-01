@@ -57,18 +57,19 @@ def init_repomisc_config(reposfile):
     return repomiscconfig
 
 
-def repo_clone(repos):
-    for repo in repos:
-        if not os.path.exists(repo.repopath):
-            os.makedirs(repo.repopath)
-        result = subprocess.run(["git", "clone", repo.url(), repo.repopath])
+def repo_update(repos):
+    for name, repo in repos.items():
+        olddir = os.getcwd()
+        os.chdir(repo.repopath)
+        result = subprocess.run(["git", "pull"])
+        os.chdir(olddir)
 
 
-def init_repos(config, clone=True, exists=True, verbosity=None):
+def init_repos(config, exists=True, empty=True):
     repos = {}
     for repo in config.repos:
         try:
-            repo.init_repo(exists=exists, clone=clone, verbosity=verbosity)
+            repo.init_repo(exists=exists, empty=empty, verbosity="INFO")
             repos[repo.reponame] = repo
         except errors.GitError as e:
             logging.error(e)
@@ -102,13 +103,11 @@ def main():
         level=config.logging.verbosity, format="%(levelname)s: %(message)s")
     repomiscconfig = init_repomisc_config(config.repos)
     if config.command == "init":
-        repos = init_repos(
-            repomiscconfig, clone=True, verbosity="INFO")
+        repos = init_repos(repomiscconfig, exists=False, empty=False)
         return
-    repos = init_repos(
-        repomiscconfig, clone=False, verbosity="INFO")
+    repos = init_repos(repomiscconfig, exists=True, empty=False)
     if config.command == "update":
-        pass
+        repo_update(repos)
     elif config.command == "push":
         pass
     elif config.command == "status":
