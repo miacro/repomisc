@@ -78,9 +78,13 @@ class Repo():
         for name in ("basicurl", "reponame"):
             assert getattr(
                 self, name) is not None, "required attribute {}".format(name)
+        if self.basicurl is None:
+            basicurl = ""
+        else:
+            basicurl = self.basicurl
         if self.owner is None:
-            return "{}{}.git".format(self.basicurl, self.reponame)
-        return "{}{}/{}.git".format(self.basicurl, self.owner, self.reponame)
+            return "{}{}.git".format(basicurl, self.reponame)
+        return "{}{}/{}.git".format(basicurl, self.owner, self.reponame)
 
     def clone(self, verbosity=None):
         if verbosity:
