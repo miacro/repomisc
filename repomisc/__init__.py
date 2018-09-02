@@ -19,15 +19,19 @@ class Commands():
         for name, value in vars(self).items():
             yield name, value
 
+    def __repr__(self):
+        return repr(vars(self))
+
     def __setattr__(self, name, value):
+        if not value:
+            value = []
         if isinstance(value, str):
             value = [value]
         elif isinstance(value, list) or isinstance(value, tuple):
             pass
-        elif not value:
-            value = []
         else:
-            raise errors.CommandError("TypeError of command '{}'".format(name))
+            raise errors.CommandError(
+                "TypeError of value '{}' for command '{}'".format(value, name))
         return super().__setattr__(name, value)
 
     def run(self, name):
@@ -61,7 +65,10 @@ class Repo():
         self.__repo = None
 
     def __repr__(self):
-        return repr(vars(self))
+        return repr({
+            name: value
+            for name, value in vars(self).items() if name[:1] != "_"
+        })
 
     def __setattr__(self, name, value):
         if name == "reponame":

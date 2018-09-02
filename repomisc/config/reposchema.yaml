@@ -1,12 +1,19 @@
 repomisc:
   repo:
-    username: ""
-    password: ""
-    basicurl: ""
-    owner: ""
-    reponame: ""
-    repopath: ""
-    refspecs: []
+    username:
+      $type: str
+    password:
+      $type: str
+    basicurl:
+      $type: str
+    owner:
+      $type: str
+    reponame:
+      $type: str
+    repopath:
+      $type: str
+    refspecs:
+      $type: list
     commands:
       $type: dict
   repos:
