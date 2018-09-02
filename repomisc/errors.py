@@ -11,3 +11,7 @@ class RepoError(Exception):
                 message = "Repo {} {}".format(reponame, message)
         self.reponame = reponame
         super(RepoError, self).__init__(message)
+
+
+class CommandError(Exception):
+    pass

@@ -2,12 +2,54 @@ from . import git
 import logging
 from . import repoutils
 from . import errors
+import subprocess
+
+
+class Commands():
+    def __init__(self, commands):
+        if not commands:
+            commands = {}
+        for name, command in commands:
+            setattr(self, name, command)
+        for name in ("install", "reinstall", "uninstall"):
+            if not hasattr(self, name):
+                setattr(self, name, [])
+
+    def __iter__(self):
+        for name, value in vars(self).items():
+            yield name, value
+
+    def __setattr__(self, name, value):
+        if isinstance(value, str):
+            value = [value]
+        elif isinstance(value, list) or isinstance(value, tuple):
+            pass
+        elif not value:
+            value = []
+        else:
+            raise errors.CommandError("TypeError of command '{}'".format(name))
+        return super().__setattr__(name, value)
+
+    def run(self, name):
+        if isinstance(name, str):
+            names = [name]
+        else:
+            names = name
+        for name in names:
+            commands = getattr(self, name)
+            for command in commands:
+                result = subprocess.run(command, shell=True)
+                if result.returncode != 0:
+                    raise errors.CommandError(
+                        "Execute '{}' command '{}' failed".format(
+                            command, name))
 
 
 class Repo():
     def __init__(self, **kwargs):
         attrnames = ("scheme", "username", "password", "hostname", "port",
-                     "owner", "reponame", "basicurl", "repopath", "refspecs")
+                     "owner", "reponame", "basicurl", "repopath", "refspecs",
+                     "commands")
         for name in attrnames:
             if name in kwargs:
                 setattr(self, name, kwargs[name])
@@ -22,11 +64,14 @@ class Repo():
         return repr(vars(self))
 
     def __setattr__(self, name, value):
-        if isinstance(value, str) and value:
-            if name == "reponame" and value[-4:] == ".git":
+        if name == "reponame":
+            if isinstance(value, str) and value[-4:] == ".git":
                 value = value[:-4]
-            if name == "basicurl" and value[-1:] != "/":
+        elif name == "basicurl":
+            if isinstance(value, str) and value[-1:] != "/":
                 value = value + "/"
+        elif name == "commands":
+            value = Commands(value)
         return super().__setattr__(name, value)
 
     def url(self):

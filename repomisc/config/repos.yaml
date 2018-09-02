@@ -5,6 +5,13 @@ repomisc:
     basicurl: https://github.com
     owner: miacro
     repopath: "repositories"
+    commands:
+      install:
+      - "make install"
+      uninstall:
+      - "make uninstall"
+      reinstall:
+      - "make reinstall"
   repos:
   - bootstrap
   - command-line-options

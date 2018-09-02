@@ -1,11 +1,10 @@
 import pyconfigmanager as configmanager
 import argparse
 import os
-import repomisc
-from repomisc import repoutils
 import subprocess
 import logging
 from repomisc import errors
+from repomisc.config import getconfig as getrepomiscconfig
 
 ARGSCHEMA = {
     "command": "",
@@ -20,41 +19,6 @@ ARGSCHEMA = {
     "push": {},
     "status": {},
 }
-
-REPOSCHEMA = configmanager.getschema(
-    os.path.join(
-        os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "config",
-        "reposchema.yaml"),
-    pickname=None)
-
-
-def init_repomisc_config(reposfile):
-    repomiscconfig = configmanager.getconfig(
-        REPOSCHEMA, values=reposfile, pickname="repomisc")
-    for index, item in enumerate(repomiscconfig.repos):
-        if isinstance(item, str):
-            parseresult = repoutils.urlparse(item)
-            if parseresult is None:
-                logging.error("Invalid repo url: {}".format(item))
-                repomiscconfig.repos[index] = None
-                continue
-            item = parseresult
-        repo = repomisc.Repo(**item)
-        for name in ("owner", "basicurl"):
-            if getattr(repo, name) is None:
-                setattr(repo, name, repomiscconfig.repo[name])
-        if repo.repopath is None:
-            repo.repopath = os.path.join(repomiscconfig.repo.repopath,
-                                         repo.reponame)
-        for name in ("reponame", "owner", "basicurl", "repopath"):
-            assert (getattr(repo, name) is
-                    not None), "{} of repo {} must not be None".format(
-                        name, item["reponame"])
-        repomiscconfig.repos[index] = repo
-    repomiscconfig.repos = [
-        item for item in repomiscconfig.repos if item is not None
-    ]
-    return repomiscconfig
 
 
 def repos_update(repos):
@@ -117,7 +81,7 @@ def main():
         config.dump_config(filename=config.config.dump, exit=True)
     configmanager.logging.config(
         level=config.logging.verbosity, format="%(levelname)s: %(message)s")
-    repomiscconfig = init_repomisc_config(config.repos)
+    repomiscconfig = getrepomiscconfig(config.repos)
     if config.command == "init":
         repos = repos_init(repomiscconfig, exists=False, empty=False)
         return
