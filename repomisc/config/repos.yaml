@@ -1,35 +1,35 @@
-repomisc:
-  repo:
-    username: miacro
-    password: ""
-    basicurl: https://github.com
-    owner: miacro
-    repopath: "repositories"
-    commands:
-      install:
-      - "make install"
-      uninstall:
-      - "make uninstall"
-      reinstall:
-      - "make reinstall"
-  repos:
-  - bootstrap
-  - command-line-options
-  - dockerwrapper
-  - reponame: easycert
-  - emacs.d
-  - lisp-koans
-  - miacro-overlay
-  - miacropp
-  - minesweeper
-  - https://github.com/miacro/mlmisc
-  - nginx.d
-  - online-judge
-  - pkget
-  - https://github.com/miacro/profiles.git
-  - pyconfigmanager
-  - repomisc
-  - stumpwm.d
-  - utils
-  - vim.d
-  - https://github.com
+repo:
+  username: miacro
+  password: ""
+  basicurl: https://github.com
+  owner: miacro
+  repopath: "repositories"
+  commands:
+    install:
+    - "make install"
+    uninstall:
+    - "make uninstall"
+    reinstall:
+    - "make reinstall"
+
+repos:
+- bootstrap
+- command-line-options
+- dockerwrapper
+- reponame: easycert
+- emacs.d
+- lisp-koans
+- miacro-overlay
+- miacropp
+- minesweeper
+- https://github.com/miacro/mlmisc
+- nginx.d
+- online-judge
+- pkget
+- https://github.com/miacro/profiles.git
+- pyconfigmanager
+- repomisc
+- stumpwm.d
+- utils
+- vim.d
+- https://github.com

@@ -23,7 +23,7 @@ def getconfig(reposfile, repofile="repomisc.yaml"):
                         setattr(commands, command_name, value[command_name])
 
     repomiscconfig = configmanager.getconfig(
-        REPOSCHEMA, values=reposfile, pickname="repomisc")
+        REPOSCHEMA, values=reposfile)
     default_repoconfig = repomiscconfig.repo.values()
     for index, item in enumerate(repomiscconfig.repos):
         if isinstance(item, str):
@@ -35,7 +35,7 @@ def getconfig(reposfile, repofile="repomisc.yaml"):
             item = parseresult
         else:
             item = configmanager.getconfig(
-                REPOSCHEMA["repomisc"]["repo"], values=item).values()
+                REPOSCHEMA["repo"], values=item).values()
         repo = repomisc.Repo(**item)
         if repo.repopath is None:
             repo.repopath = os.path.join(repomiscconfig.repo.repopath,
@@ -43,11 +43,11 @@ def getconfig(reposfile, repofile="repomisc.yaml"):
         repoabsfile = os.path.join(repo.repopath, repofile)
         if os.path.exists(repoabsfile) and os.path.isfile(repoabsfile):
             repoconfig = configmanager.getconfig(
-                REPOSCHEMA, values=repoabsfile, pickname="repomisc")
+                REPOSCHEMA["repo"], values=repoabsfile)
             repomerge(
                 repo, {
                     name: value
-                    for name, value in repoconfig.repo.values().items()
+                    for name, value in repoconfig.values().items()
                     if name not in ("repopath", )
                 })
         repomerge(
